@@ -48,6 +48,21 @@
   }
 }
 
+@keyframes opsgraph-trace-once {
+  from {
+    stroke-dasharray: 10 6;
+    stroke-dashoffset: 64;
+  }
+  to {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+.opsgraph-trace-path {
+  animation: opsgraph-trace-once 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

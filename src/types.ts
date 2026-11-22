@@ -6,7 +6,8 @@ export type NavSection =
   | "analyst"
   | "workload"
   | "performance"
-  | "ask";
+  | "ask"
+  | "opsgraph";
 
 export type ProjectStatus =
   | "new"
@@ -260,3 +261,125 @@ export interface OperationalIntelligenceReport {
   unrecordedNotesCount: number;
 }
 
+export type OpsGraphNodeType =
+  | "project"
+  | "employee"
+  | "customer"
+  | "blocker"
+  | "deadline"
+  | "risk";
+
+export type OpsGraphEdgeKind =
+  | "owns"
+  | "client_of"
+  | "blocked_by"
+  | "deadline_window"
+  | "risk_exposure"
+  | "related_project";
+
+export type OpsGraphDateRange = "all" | "7d" | "14d" | "30d";
+
+export interface OpsGraphFilters {
+  types: Record<OpsGraphNodeType, boolean>;
+  showDependencies: boolean;
+  criticalOnly: boolean;
+  overdueOnly: boolean;
+  highUtilizationOnly: boolean;
+  upcomingDeadlinesOnly: boolean;
+  dateRange: OpsGraphDateRange;
+  collapsedSecondary: boolean;
+}
+
+export interface OpsGraphNode {
+  id: string;
+  type: OpsGraphNodeType;
+  labelEn: string;
+  labelAr: string;
+  subtitleEn: string;
+  subtitleAr: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  x: number;
+  y: number;
+  projectId?: string;
+  employeeId?: string;
+  customerName?: string;
+  riskScore?: number;
+  riskLevel?: RiskLevel;
+  utilizationPct?: number;
+  affectedCount?: number;
+  daysDelta?: number;
+  deadlineState?: "overdue" | "due_soon" | "upcoming" | "completed";
+  hasVisibilityGap?: boolean;
+  searchTokens: string;
+}
+
+export interface OpsGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  kind: OpsGraphEdgeKind;
+  labelEn: string;
+  labelAr: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+}
+
+export interface OpsGraphData {
+  nodes: OpsGraphNode[];
+  edges: OpsGraphEdge[];
+  nodeMap: Map<string, OpsGraphNode>;
+  adjacency: Map<string, Set<string>>;
+  missingDataSummaryEn: string[];
+  missingDataSummaryAr: string[];
+}
+
+export interface NodeImpactReport {
+  nodeId: string;
+  affectedProjects: Array<{
+    project: Project;
+    riskScore: number;
+    riskLevel: RiskLevel;
+    daysUntilDeadline: number;
+    remainingHours: number;
+    ownerName: string;
+    ownerNameAr: string;
+    blockerEn: string;
+    blockerAr: string;
+    hasRecordedBlocker: boolean;
+  }>;
+  totalRemainingHours: number;
+  highOrCriticalCount: number;
+  overdueCount: number;
+  summaryEn: string;
+  summaryAr: string;
+  tracedNodeIds: Set<string>;
+  tracedEdgeIds: Set<string>;
+}
+
+export interface WhatIfScenarioResult {
+  projectId: string;
+  projectTitle: string;
+  projectTitleAr: string;
+  fromEmployeeId: string;
+  fromEmployeeName: string;
+  fromEmployeeNameAr: string;
+  toEmployeeId: string;
+  toEmployeeName: string;
+  toEmployeeNameAr: string;
+  hoursMoved: number;
+  skillMatch: boolean;
+  before: {
+    fromUtilizationPct: number;
+    toUtilizationPct: number;
+    projectRiskScore: number;
+    projectRiskLevel: RiskLevel;
+    fromHighRiskCount: number;
+  };
+  after: {
+    fromUtilizationPct: number;
+    toUtilizationPct: number;
+    projectRiskScore: number;
+    projectRiskLevel: RiskLevel;
+    fromHighRiskCount: number;
+  };
+  affectedProjectIds: string[];
+}

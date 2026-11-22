@@ -9,6 +9,7 @@ import {
   Menu,
   Monitor,
   Moon,
+  Network,
   Plus,
   RotateCcw,
   ShieldAlert,
@@ -60,6 +61,8 @@ import { AnalystView } from "./views/AnalystView";
 import { WorkloadView } from "./views/WorkloadView";
 import { PerformanceView } from "./views/PerformanceView";
 import { AskOpsPilotView } from "./views/AskOpsPilotView";
+import { OpsGraphView } from "./views/OpsGraphView";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import {
   DeleteConfirmModal,
   ProjectDetailModal,
@@ -605,6 +608,7 @@ export default function App() {
     { id: "workload", label: t.nav.workload, Icon: Users },
     { id: "performance", label: t.nav.performance, Icon: BarChart3 },
     { id: "ask", label: t.nav.ask, Icon: Bot },
+    { id: "opsgraph", label: t.nav.opsgraph, Icon: Network },
   ];
 
   const themeOptions: Array<{ id: ThemeMode; label: string; Icon: React.ElementType }> = [
@@ -876,7 +880,13 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8 max-w-[1440px] w-full mx-auto">
+        <main
+          className={`flex-1 w-full mx-auto ${
+            activeSection === "opsgraph"
+              ? "p-3 sm:p-5 max-w-[1680px]"
+              : "p-4 sm:p-8 max-w-[1440px]"
+          }`}
+        >
           {activeSection === "dashboard" && (
             <DashboardView
               language={language}
@@ -966,6 +976,32 @@ export default function App() {
                 setChatError(null);
               }}
             />
+          )}
+
+          {activeSection === "opsgraph" && (
+            <ErrorBoundary
+              variant="panel"
+              language={language}
+              fallbackTitle={t.opsgraph.errorState.title}
+              fallbackDescription={t.opsgraph.errorState.description}
+              fallbackRetryLabel={t.opsgraph.errorState.retry}
+            >
+              <OpsGraphView
+                language={language}
+                themeMode={themeMode}
+                onSetThemeMode={setThemeMode}
+                projects={projects}
+                employees={employees}
+                metrics={metrics}
+                workloads={workloads}
+                risks={risks}
+                rebalanceSuggestions={rebalanceSuggestions}
+                intelligence={intelligence}
+                projectsSignature={projectsSignature}
+                onInspectProject={setInspectingProject}
+                onNavigate={setActiveSection}
+              />
+            </ErrorBoundary>
           )}
         </main>
       </div>

@@ -50,7 +50,7 @@ const WORKLOAD_RE =
   /\b(overload|overloaded|workload|capacity|utilization|busy|available|bandwidth|rebalance|reassign|allocation|hours|who is working|team load|tariq|nadia|omar|lina|kareem)\b|(ضغط|عبء|أعباء|طاقة|سعة|إشغال|مزدحم|متاح|إعادة توزيع|إسناد|ساعات|طارق|نادية|عمر|لينا|كريم)/i;
 
 const RISK_OVERDUE_RE =
-  /\b(risk|risks|at-risk|at risk|overdue|late|delay|delayed|delays|blocker|blockers|urgent|priority|priorities|prioritize|deadline|deadlines|focus today|this week|highest risk|follow-up|followup|follow up|stalled|on hold|op-\d+)\b|(خطر|مخاطر|متأخر|متأخرة|تأخير|عائق|عوائق|عاجل|أولوية|أولويات|موعد|مواعيد|تركيز|هذا الأسبوع|متابعة|معلق)/i;
+  /\b(risk|risks|at-risk|at risk|overdue|late|delay|delayed|delays|blocker|blockers|bottleneck|bottlenecks|urgent|priority|priorities|prioritize|deadline|deadlines|focus today|this week|highest risk|follow-up|followup|follow up|stalled|on hold|trace impact|affected projects|why does this matter|op-\d+)\b|(خطر|مخاطرة|مخاطر|متأخر|متأخرة|تأخير|عائق|عوائق|اختناق|عاجل|أولوية|أولويات|موعد|مواعيد|تركيز|هذا الأسبوع|متابعة|معلق|تتبع الأثر|المشاريع المتأثرة)/i;
 
 const PERFORMANCE_RE =
   /\b(on-time|on time|completion rate|avg completion|average completion|performance|kpi|kpis|trend|trends|category|categories|improving|worse|getting worse|delivery rate|historical|monthly)\b|(في الوقت المحدد|معدل الإنجاز|متوسط مدة|الأداء|مؤشر|مؤشرات|اتجاه|اتجاهات|فئة|تحسين|يتحسن|يتراجع|شهري)/i;
@@ -236,7 +236,9 @@ export function buildTargetedChatContext(
         riskScore: r.riskScore,
         riskLevel: r.riskLevel,
         signals: r.signals.map((s) => (language === "ar" ? s.detailAr : s.detailEn)),
-        notes: (language === "ar" ? r.project.notesAr || r.project.notes : r.project.notes) || "[No notes recorded]",
+        notes:
+          (language === "ar" ? r.project.notesAr || r.project.notes : r.project.notes) ||
+          (language === "ar" ? "[لا توجد ملاحظات مسجلة]" : "[No notes recorded]"),
       })),
     };
   } else if (intent === "performance") {
@@ -257,7 +259,9 @@ export function buildTargetedChatContext(
         title: language === "ar" ? p.titleAr || p.title : p.title,
         deadline: p.deadline,
         progress: p.progress,
-        notes: (language === "ar" ? p.notesAr || p.notes : p.notes) || "[No notes recorded]",
+        notes:
+          (language === "ar" ? p.notesAr || p.notes : p.notes) ||
+          (language === "ar" ? "[لا توجد ملاحظات مسجلة]" : "[No notes recorded]"),
       }));
 
     context = {
@@ -349,7 +353,9 @@ export function buildTargetedChatContext(
           remainingHours: calcRemainingHours(p),
           riskScore: r?.riskScore,
           riskLevel: r?.riskLevel,
-          notes: (language === "ar" ? p.notesAr || p.notes : p.notes) || "[No notes]",
+          notes:
+            (language === "ar" ? p.notesAr || p.notes : p.notes) ||
+            (language === "ar" ? "[لا توجد ملاحظات مسجلة]" : "[No notes recorded]"),
         };
       }),
       rebalanceCandidates: workspace.rebalanceSuggestions.map((r) => ({
