@@ -1,0 +1,93 @@
+import React from "react";
+import { AlertTriangle, RotateCcw } from "lucide-react";
+import { Language } from "../types";
+import { getCopy } from "../i18n/translations";
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  language?: Language;
+  variant?: "app" | "panel";
+  onRetry?: () => void;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    if (import.meta.env.DEV) {
+      console.error("[OpsPilot ErrorBoundary]", {
+        name: error?.name,
+        message: error?.message,
+        componentStack: info?.componentStack,
+      });
+    }
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false });
+    this.props.onRetry?.();
+  };
+
+  render() {
+    if (!this.state.hasError) {
+      return this.props.children;
+    }
+
+    const lang: Language =
+      this.props.language ??
+      (typeof document !== "undefined" && document.documentElement.lang === "ar" ? "ar" : "en");
+    const t = getCopy(lang);
+
+    if (this.props.variant === "app") {
+      return (
+        <div
+          dir={lang === "ar" ? "rtl" : "ltr"}
+          className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6"
+        >
+          <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl p-6 space-y-4 text-center">
+            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <h1 className="text-base font-bold text-[#0F294A]">{t.brand}</h1>
+            <p className="text-sm text-slate-600">{t.aiStates.errorMessage}</p>
+            <button
+              type="button"
+              onClick={this.handleReset}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{t.aiStates.retry}</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{t.aiStates.errorMessage}</span>
+        </div>
+        <button
+          type="button"
+          onClick={this.handleReset}
+          className="px-3 py-1.5 bg-white border border-red-200 rounded font-medium text-red-700 hover:bg-red-100 whitespace-nowrap shrink-0 cursor-pointer"
+        >
+          {t.aiStates.retry}
+        </button>
+      </div>
+    );
+  }
+}
