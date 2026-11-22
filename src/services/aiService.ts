@@ -6,6 +6,7 @@ import {
   Employee,
   EmployeeWorkloadSummary,
   Language,
+  OperationalIntelligenceReport,
   OperationalMetrics,
   PerformanceAIResponse,
   Project,
@@ -155,6 +156,7 @@ export interface CompactPerformanceContext {
     progress: number;
     note?: string;
   }>;
+  operationalPatterns?: Array<{ title: string; detail: string; evidence: string }>;
 }
 
 export interface CompactDailyBriefContext {
@@ -190,6 +192,7 @@ export interface CompactDailyBriefContext {
     activeProjectsCount: number;
     overdueProjectsCount: number;
   }>;
+  operationalPatterns?: Array<{ title: string; detail: string; evidence: string }>;
 }
 
 export interface CompactAnalystContext {
@@ -235,6 +238,19 @@ export interface CompactAnalystContext {
     skillMatch: boolean;
     requiresManagerVerification: boolean;
   }>;
+  operationalPatterns?: Array<{ title: string; detail: string; evidence: string }>;
+}
+
+function compactPatterns(
+  intelligence: OperationalIntelligenceReport | undefined,
+  language: Language
+) {
+  if (!intelligence) return undefined;
+  return intelligence.proactiveInsights.map((p) => ({
+    title: language === "ar" ? p.titleAr : p.titleEn,
+    detail: language === "ar" ? p.detailAr : p.detailEn,
+    evidence: language === "ar" ? p.evidenceAr : p.evidenceEn,
+  }));
 }
 
 export function buildPerformanceContext(
@@ -242,7 +258,8 @@ export function buildPerformanceContext(
   employees: Employee[],
   metrics: OperationalMetrics,
   workloads: EmployeeWorkloadSummary[],
-  language: Language
+  language: Language,
+  intelligence?: OperationalIntelligenceReport
 ): CompactPerformanceContext {
   const todayISO = getTodayISO();
   const empMap = new Map(employees.map((e) => [e.id, e]));
@@ -281,6 +298,7 @@ export function buildPerformanceContext(
       overdueProjectsCount: w.overdueProjectsCount,
     })),
     delayedProjects,
+    operationalPatterns: compactPatterns(intelligence, language),
   };
 }
 
@@ -289,7 +307,8 @@ export function buildDailyBriefContext(
   metrics: OperationalMetrics,
   risks: ProjectRiskAssessment[],
   workloads: EmployeeWorkloadSummary[],
-  language: Language
+  language: Language,
+  intelligence?: OperationalIntelligenceReport
 ): CompactDailyBriefContext {
   const empMap = new Map(employees.map((e) => [e.id, e]));
 
@@ -330,6 +349,7 @@ export function buildDailyBriefContext(
       activeProjectsCount: w.activeProjectsCount,
       overdueProjectsCount: w.overdueProjectsCount,
     })),
+    operationalPatterns: compactPatterns(intelligence, language),
   };
 }
 
@@ -339,7 +359,8 @@ export function buildAnalystContext(
   risks: ProjectRiskAssessment[],
   workloads: EmployeeWorkloadSummary[],
   rebalanceCandidates: RebalanceSuggestion[],
-  language: Language
+  language: Language,
+  intelligence?: OperationalIntelligenceReport
 ): CompactAnalystContext {
   const empMap = new Map(employees.map((e) => [e.id, e]));
 
@@ -390,6 +411,7 @@ export function buildAnalystContext(
       skillMatch: r.skillMatch,
       requiresManagerVerification: r.requiresManagerVerification,
     })),
+    operationalPatterns: compactPatterns(intelligence, language),
   };
 }
 

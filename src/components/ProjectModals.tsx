@@ -11,7 +11,7 @@ import {
 } from "../types";
 import { getCopy } from "../i18n/translations";
 import { PriorityLabel, RiskLevelLabel, StatusLabel } from "./StatusIndicator";
-import { getTodayISO } from "../utils/analytics";
+import { diffDays, extractProjectBlocker, getTodayISO } from "../utils/analytics";
 
 interface ProjectFormModalProps {
   open: boolean;
@@ -93,6 +93,15 @@ export function ProjectFormModal({
     }
   }, [open, initialProject, employees, language]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,17 +137,25 @@ export function ProjectFormModal({
     );
   };
 
+  const inputClass =
+    "w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600";
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-base font-bold text-[#0F294A]">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/70 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <h2 className="text-base font-bold text-[#0F294A] dark:text-slate-100">
             {initialProject ? t.projects.editTitle : t.projects.createTitle}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+            aria-label={t.projects.form.close}
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -147,32 +164,38 @@ export function ProjectFormModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.title} *</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.title} *
+              </span>
               <input
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={inputClass}
               />
             </label>
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.client} *</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.client} *
+              </span>
               <input
                 required
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={inputClass}
               />
             </label>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.service}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.service}
+              </span>
               <select
                 value={serviceType}
                 onChange={(e) => setServiceType(e.target.value as ServiceType)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={inputClass}
               >
                 {SERVICE_TYPES.map((st) => (
                   <option key={st} value={st}>
@@ -183,11 +206,13 @@ export function ProjectFormModal({
             </label>
 
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.owner}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.owner}
+              </span>
               <select
                 value={assignedEmployeeId}
                 onChange={(e) => setAssignedEmployeeId(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={inputClass}
               >
                 {employees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
@@ -200,39 +225,47 @@ export function ProjectFormModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.startDate}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.startDate}
+              </span>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono-num focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={`${inputClass} font-mono-num`}
               />
             </label>
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.deadline}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.deadline}
+              </span>
               <input
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono-num focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={`${inputClass} font-mono-num`}
               />
             </label>
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.workload}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.workload}
+              </span>
               <input
                 type="number"
                 min={1}
                 max={300}
                 value={estimatedWorkload}
                 onChange={(e) => setEstimatedWorkload(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono-num focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={`${inputClass} font-mono-num`}
               />
             </label>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.status}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.status}
+              </span>
               <select
                 value={status}
                 onChange={(e) => {
@@ -240,7 +273,7 @@ export function ProjectFormModal({
                   setStatus(next);
                   if (next === "completed") setProgress(100);
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={inputClass}
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -251,11 +284,13 @@ export function ProjectFormModal({
             </label>
 
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">{t.projects.form.priority}</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t.projects.form.priority}
+              </span>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className={inputClass}
               >
                 {PRIORITIES.map((p) => (
                   <option key={p} value={p}>
@@ -266,7 +301,7 @@ export function ProjectFormModal({
             </label>
 
             <label className="space-y-1.5 block">
-              <span className="text-xs font-medium text-slate-700">
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
                 {t.projects.form.progress} ({progress}%)
               </span>
               <input
@@ -282,20 +317,22 @@ export function ProjectFormModal({
           </div>
 
           <label className="space-y-1.5 block">
-            <span className="text-xs font-medium text-slate-700">{t.projects.form.notes}</span>
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t.projects.form.notes}
+            </span>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className={inputClass}
             />
           </label>
 
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
             >
               {t.projects.form.cancel}
             </button>
@@ -328,25 +365,54 @@ export function ProjectDetailModal({
   onEdit: (p: Project) => void;
 }) {
   const t = getCopy(language);
+
+  useEffect(() => {
+    if (!project) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [project, onClose]);
+
   if (!project) return null;
 
   const title = language === "ar" ? project.titleAr : project.title;
   const client = language === "ar" ? project.clientNameAr : project.clientName;
-  const notes = language === "ar" ? project.notesAr : project.notes;
   const ownerName = owner ? (language === "ar" ? owner.nameAr : owner.name) : "—";
+  const blocker = extractProjectBlocker(project);
+  const blockerText = language === "ar" ? blocker.ar : blocker.en;
+  const daysDelta = assessment?.daysUntilDeadline ?? diffDays(getTodayISO(), project.deadline);
+  const scheduleSummary =
+    project.status === "completed"
+      ? t.statuses.completed
+      : daysDelta < 0
+      ? `${Math.abs(daysDelta)}${t.dashboard.alerts.daysOverdue}`
+      : daysDelta === 0
+      ? t.dashboard.alerts.dueToday
+      : `${daysDelta}${t.dashboard.alerts.daysLeft}`;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-xl shadow-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/70 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-xl">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span className="text-xs font-mono-num text-blue-700 font-semibold">{project.id}</span>
-            <h2 className="text-base font-bold text-[#0F294A] mt-0.5">{title}</h2>
+            <span className="text-xs font-mono-num text-blue-700 dark:text-blue-400 font-semibold">
+              {project.id}
+            </span>
+            <h2 className="text-base font-bold text-[#0F294A] dark:text-slate-100 mt-0.5">
+              {title}
+            </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+            aria-label={t.projects.form.close}
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -355,41 +421,59 @@ export function ProjectDetailModal({
         <div className="p-6 space-y-5 text-sm">
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <div className="text-slate-400">{t.projects.form.client}</div>
-              <div className="font-semibold text-slate-900 mt-0.5">{client}</div>
+              <div className="text-slate-400 dark:text-slate-500">{t.projects.form.client}</div>
+              <div className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{client}</div>
             </div>
             <div>
-              <div className="text-slate-400">{t.projects.form.service}</div>
-              <div className="font-semibold text-slate-900 mt-0.5">
+              <div className="text-slate-400 dark:text-slate-500">{t.projects.form.service}</div>
+              <div className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
                 {t.services[project.serviceType]}
               </div>
             </div>
             <div>
-              <div className="text-slate-400">{t.projects.form.owner}</div>
-              <div className="font-semibold text-slate-900 mt-0.5">{ownerName}</div>
-            </div>
-            <div>
-              <div className="text-slate-400">{t.projects.form.workload}</div>
-              <div className="font-mono-num font-semibold text-slate-900 mt-0.5">
-                {project.estimatedWorkload} {t.projects.hoursSuffix}
+              <div className="text-slate-400 dark:text-slate-500">{t.projects.form.owner}</div>
+              <div className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
+                {ownerName}
               </div>
             </div>
             <div>
-              <div className="text-slate-400">{t.projects.form.startDate}</div>
-              <div className="font-mono-num text-slate-800 mt-0.5">{project.startDate}</div>
+              <div className="text-slate-400 dark:text-slate-500">{t.projects.form.workload}</div>
+              <div className="font-mono-num font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
+                {project.estimatedWorkload} {t.projects.hoursSuffix}
+                {assessment && (
+                  <span className="text-slate-500 dark:text-slate-400 font-normal ms-1.5">
+                    ({assessment.remainingWorkloadHours}
+                    {t.projects.hoursSuffix})
+                  </span>
+                )}
+              </div>
             </div>
             <div>
-              <div className="text-slate-400">{t.projects.form.deadline}</div>
-              <div className="font-mono-num font-semibold text-slate-900 mt-0.5">
+              <div className="text-slate-400 dark:text-slate-500">{t.projects.form.deadline}</div>
+              <div className="font-mono-num font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
                 {project.deadline}
+              </div>
+            </div>
+            <div>
+              <div className="text-slate-400 dark:text-slate-500">
+                {t.projects.details.scheduleStatus}
+              </div>
+              <div
+                className={`font-mono-num font-semibold mt-0.5 ${
+                  daysDelta < 0 && project.status !== "completed"
+                    ? "text-red-700 dark:text-red-400"
+                    : "text-slate-800 dark:text-slate-200"
+                }`}
+              >
+                {scheduleSummary}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
             <StatusLabel status={project.status} label={t.statuses[project.status]} />
             <PriorityLabel priority={project.priority} label={t.priorities[project.priority]} />
-            <span className="font-mono-num text-xs font-semibold text-slate-800">
+            <span className="font-mono-num text-xs font-semibold text-slate-800 dark:text-slate-200">
               {project.progress}%
             </span>
             {assessment && (
@@ -400,31 +484,49 @@ export function ProjectDetailModal({
             )}
           </div>
 
-          <div className="space-y-1.5 pt-2 border-t border-slate-100">
-            <div className="text-xs font-semibold text-slate-600">{t.projects.form.notes}</div>
-            <p className="text-xs text-slate-700 leading-relaxed">
-              {notes || t.projects.noNotes}
+          <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+              {t.projects.details.blocker}
+            </div>
+            <p
+              className={`text-xs leading-relaxed ${
+                blocker.hasRecordedBlocker
+                  ? "text-slate-800 dark:text-slate-200"
+                  : "text-amber-700 dark:text-amber-300"
+              }`}
+            >
+              {blockerText}
             </p>
           </div>
 
-          {assessment && assessment.signals.length > 0 && (
-            <div className="space-y-1.5 pt-2 border-t border-slate-100">
-              <div className="text-xs font-semibold text-[#0F294A]">
-                {t.analyst.recommendedAction}
+          {assessment && (
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  {t.projects.details.riskExplanation}
+                </div>
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                  {language === "ar" ? assessment.observationAr : assessment.observationEn}
+                </p>
               </div>
-              <p className="text-xs text-slate-700">
-                {language === "ar"
-                  ? assessment.recommendedActionAr
-                  : assessment.recommendedActionEn}
-              </p>
+              <div className="space-y-1">
+                <div className="text-xs font-semibold text-[#0F294A] dark:text-blue-400">
+                  {t.projects.details.recommendedAction}
+                </div>
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                  {language === "ar"
+                    ? assessment.recommendedActionAr
+                    : assessment.recommendedActionEn}
+                </p>
+              </div>
             </div>
           )}
 
-          <div className="pt-3 border-t border-slate-200 flex justify-end gap-3">
+          <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer"
+              className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
             >
               {t.projects.form.close}
             </button>
@@ -457,16 +559,32 @@ export function DeleteConfirmModal({
   onConfirm: () => void;
 }) {
   const t = getCopy(language);
+
+  useEffect(() => {
+    if (!project) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [project, onCancel]);
+
   if (!project) return null;
   const title = language === "ar" ? project.titleAr : project.title;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[1px] flex items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-xl w-full max-w-md p-6 space-y-4 shadow-xl">
-        <h2 className="text-base font-bold text-[#0F294A]">{t.projects.deleteTitle}</h2>
-        <p className="text-sm text-slate-600">
+    <div
+      className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-black/70 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl w-full max-w-md p-6 space-y-4 shadow-xl">
+        <h2 className="text-base font-bold text-[#0F294A] dark:text-slate-100">
+          {t.projects.deleteTitle}
+        </h2>
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           {t.projects.deleteConfirm}{" "}
-          <span className="font-semibold text-slate-900">
+          <span className="font-semibold text-slate-900 dark:text-slate-100">
             ({project.id} — {title})
           </span>
         </p>
@@ -474,7 +592,7 @@ export function DeleteConfirmModal({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer"
+            className="px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
           >
             {t.projects.form.cancel}
           </button>

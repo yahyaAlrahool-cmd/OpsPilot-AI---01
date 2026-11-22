@@ -213,3 +213,50 @@ export interface AIRequestState<T> {
   errorKind: AIErrorKind | null;
   errorMessage: string | null;
 }
+
+export type ThemeMode = "light" | "dark" | "system";
+
+export interface AttentionItem {
+  projectId: string;
+  project: Project;
+  ownerName: string;
+  ownerNameAr: string;
+  ownerUtilizationPct: number;
+  riskScore: number;
+  riskLevel: RiskLevel;
+  priorityRankScore: number;
+  daysUntilDeadline: number;
+  remainingWorkloadHours: number;
+  blockerEn: string;
+  blockerAr: string;
+  hasRecordedBlocker: boolean;
+  whyItMattersEn: string;
+  whyItMattersAr: string;
+  recommendedActionEn: string;
+  recommendedActionAr: string;
+}
+
+export interface ProactiveInsight {
+  id: string;
+  kind: "concentration" | "deadline_collision" | "capacity" | "blockers";
+  severity: "critical" | "warning" | "info";
+  titleEn: string;
+  titleAr: string;
+  detailEn: string;
+  detailAr: string;
+  evidenceEn: string;
+  evidenceAr: string;
+}
+
+export interface OperationalIntelligenceReport {
+  immediateAttention: AttentionItem[];
+  proactiveInsights: ProactiveInsight[];
+  overloadedOwnersSummaryEn: string;
+  overloadedOwnersSummaryAr: string;
+  capacityRebalanceNarrativeEn: string;
+  capacityRebalanceNarrativeAr: string;
+  deadlineCollisionCount7d: number;
+  overdueTotalHours: number;
+  unrecordedNotesCount: number;
+}
+

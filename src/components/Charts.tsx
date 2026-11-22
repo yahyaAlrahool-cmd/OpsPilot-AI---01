@@ -8,7 +8,7 @@ import {
 } from "../types";
 import { getCopy } from "../i18n/translations";
 
-export function StatusDistributionChart({
+export const StatusDistributionChart = React.memo(function StatusDistributionChart({
   statusCounts,
   total,
   language,
@@ -18,17 +18,17 @@ export function StatusDistributionChart({
   language: Language;
 }) {
   const t = getCopy(language);
-  const items: Array<{ key: ProjectStatus; color: string; bar: string }> = [
-    { key: "in_progress", color: "#2563EB", bar: "bg-blue-600" },
-    { key: "under_review", color: "#D97706", bar: "bg-amber-600" },
-    { key: "new", color: "#0F294A", bar: "bg-[#0F294A]" },
-    { key: "on_hold", color: "#94A3B8", bar: "bg-slate-400" },
-    { key: "completed", color: "#16A34A", bar: "bg-emerald-600" },
+  const items: Array<{ key: ProjectStatus; bar: string }> = [
+    { key: "in_progress", bar: "bg-blue-600 dark:bg-blue-500" },
+    { key: "under_review", bar: "bg-amber-600 dark:bg-amber-500" },
+    { key: "new", bar: "bg-[#0F294A] dark:bg-sky-400" },
+    { key: "on_hold", bar: "bg-slate-400 dark:bg-slate-600" },
+    { key: "completed", bar: "bg-emerald-600 dark:bg-emerald-500" },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="h-3 w-full rounded bg-slate-100 overflow-hidden flex">
+      <div className="h-3 w-full rounded bg-slate-100 dark:bg-slate-800 overflow-hidden flex">
         {items.map((item) => {
           const count = statusCounts[item.key];
           const pct = total > 0 ? (count / total) * 100 : 0;
@@ -37,14 +37,14 @@ export function StatusDistributionChart({
             <div
               key={item.key}
               style={{ width: `${pct}%` }}
-              className={`${item.bar} h-full transition-all duration-200`}
+              className={`${item.bar} h-full`}
               title={`${t.statuses[item.key]}: ${count}`}
             />
           );
         })}
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
         {items.map((item) => {
           const count = statusCounts[item.key];
           const pct = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -55,11 +55,13 @@ export function StatusDistributionChart({
                   className={`w-2.5 h-2.5 rounded-xs shrink-0 ${item.bar}`}
                   aria-hidden="true"
                 />
-                <span className="text-slate-700 truncate">{t.statuses[item.key]}</span>
+                <span className="text-slate-700 dark:text-slate-300 truncate">
+                  {t.statuses[item.key]}
+                </span>
               </div>
               <div className="flex items-center gap-3 font-mono-num text-xs">
-                <span className="font-semibold text-slate-900">{count}</span>
-                <span className="text-slate-500 w-10 text-end">{pct}%</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">{count}</span>
+                <span className="text-slate-500 dark:text-slate-400 w-10 text-end">{pct}%</span>
               </div>
             </div>
           );
@@ -67,9 +69,9 @@ export function StatusDistributionChart({
       </div>
     </div>
   );
-}
+});
 
-export function CompletionTrendChart({
+export const CompletionTrendChart = React.memo(function CompletionTrendChart({
   data,
   language,
 }: {
@@ -82,7 +84,7 @@ export function CompletionTrendChart({
 
   return (
     <div className="space-y-3">
-      <div className="relative h-48 flex items-end gap-3 pt-6 pb-2 border-b border-slate-200">
+      <div className="relative h-48 flex items-end gap-3 pt-6 pb-2 border-b border-slate-200 dark:border-slate-800">
         {data.map((point, idx) => {
           const onTimeH = Math.round((point.onTimeCount / maxVal) * 100);
           const delayedH = Math.round(
@@ -99,7 +101,7 @@ export function CompletionTrendChart({
               className="flex-1 h-full flex flex-col justify-end items-center relative group cursor-default"
             >
               {isHovered && (
-                <div className="absolute -top-2 z-10 px-2.5 py-1.5 bg-[#0F294A] text-white text-[11px] rounded shadow-md whitespace-nowrap pointer-events-none font-mono-num">
+                <div className="absolute -top-2 z-10 px-2.5 py-1.5 bg-[#0F294A] dark:bg-slate-800 text-white border border-transparent dark:border-slate-700 text-[11px] rounded shadow-md whitespace-nowrap pointer-events-none font-mono-num">
                   {label}: {point.completedCount} {t.dashboard.charts.projectsLabel}
                 </div>
               )}
@@ -107,17 +109,17 @@ export function CompletionTrendChart({
                 {delayedH > 0 && (
                   <div
                     style={{ height: `${delayedH}%` }}
-                    className="w-full bg-amber-500 rounded-t transition-all duration-200"
+                    className="w-full bg-amber-500 dark:bg-amber-400 rounded-t"
                   />
                 )}
                 {onTimeH > 0 && (
                   <div
                     style={{ height: `${onTimeH}%` }}
-                    className={`w-full bg-[#2563EB] ${delayedH === 0 ? "rounded-t" : ""} transition-all duration-200`}
+                    className={`w-full bg-[#2563EB] dark:bg-blue-500 ${delayedH === 0 ? "rounded-t" : ""}`}
                   />
                 )}
                 {point.completedCount === 0 && (
-                  <div className="w-full h-1 bg-slate-200 rounded-t" />
+                  <div className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-t" />
                 )}
               </div>
             </div>
@@ -126,26 +128,29 @@ export function CompletionTrendChart({
       </div>
       <div className="flex items-center gap-3">
         {data.map((point) => (
-          <div key={point.monthKey} className="flex-1 text-center text-xs text-slate-500">
+          <div
+            key={point.monthKey}
+            className="flex-1 text-center text-xs text-slate-500 dark:text-slate-400"
+          >
             {language === "ar" ? point.labelAr : point.labelEn}
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-5 pt-1 text-xs text-slate-600">
+      <div className="flex items-center gap-5 pt-1 text-xs text-slate-600 dark:text-slate-400">
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB]" />
+          <span className="w-2.5 h-2.5 rounded-xs bg-[#2563EB] dark:bg-blue-500" />
           {t.performance.charts.onTime}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-xs bg-amber-500" />
+          <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 dark:bg-amber-400" />
           {t.performance.charts.delayed}
         </span>
       </div>
     </div>
   );
-}
+});
 
-export function TeamWorkloadChart({
+export const TeamWorkloadChart = React.memo(function TeamWorkloadChart({
   workloads,
   language,
 }: {
@@ -161,52 +166,51 @@ export function TeamWorkloadChart({
         const barWidth = Math.min(100, w.utilizationPct);
         const barColor =
           w.capacityStatus === "overloaded"
-            ? "bg-red-600"
+            ? "bg-red-600 dark:bg-red-500"
             : w.capacityStatus === "available"
-            ? "bg-emerald-600"
-            : "bg-blue-600";
+            ? "bg-emerald-600 dark:bg-emerald-500"
+            : "bg-blue-600 dark:bg-blue-500";
 
         return (
           <div key={w.employee.id} className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-medium text-slate-900 truncate">{name}</span>
-                <span className="text-slate-400">·</span>
-                <span className="text-slate-500 font-mono-num whitespace-nowrap">
+                <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                  {name}
+                </span>
+                <span className="text-slate-400 dark:text-slate-600">·</span>
+                <span className="text-slate-500 dark:text-slate-400 font-mono-num whitespace-nowrap">
                   {w.activeProjectsCount} {t.dashboard.charts.projectsLabel}
                 </span>
               </div>
               <div className="flex items-center gap-2 font-mono-num whitespace-nowrap">
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {w.activeWorkloadHours}/{w.employee.weeklyCapacityHours}h
                 </span>
                 <span
                   className={
                     w.capacityStatus === "overloaded"
-                      ? "text-red-700 font-semibold"
+                      ? "text-red-700 dark:text-red-400 font-semibold"
                       : w.capacityStatus === "available"
-                      ? "text-emerald-700 font-semibold"
-                      : "text-blue-800 font-semibold"
+                      ? "text-emerald-700 dark:text-emerald-400 font-semibold"
+                      : "text-blue-800 dark:text-blue-400 font-semibold"
                   }
                 >
                   {w.utilizationPct}%
                 </span>
               </div>
             </div>
-            <div className="h-2 w-full bg-slate-100 rounded overflow-hidden">
-              <div
-                style={{ width: `${barWidth}%` }}
-                className={`h-full ${barColor} transition-all duration-200`}
-              />
+            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded overflow-hidden">
+              <div style={{ width: `${barWidth}%` }} className={`h-full ${barColor}`} />
             </div>
           </div>
         );
       })}
     </div>
   );
-}
+});
 
-export function CategoryBreakdownChart({
+export const CategoryBreakdownChart = React.memo(function CategoryBreakdownChart({
   categoryCounts,
   language,
 }: {
@@ -227,21 +231,32 @@ export function CategoryBreakdownChart({
         return (
           <div key={cat} className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-800">{t.services[cat]}</span>
-              <span className="font-mono-num text-slate-600">
+              <span className="font-medium text-slate-800 dark:text-slate-200">
+                {t.services[cat]}
+              </span>
+              <span className="font-mono-num text-slate-600 dark:text-slate-400">
                 {entry.total} {t.performance.charts.total} ·{" "}
-                <span className={entry.delayed > 0 ? "text-red-700 font-medium" : "text-slate-500"}>
+                <span
+                  className={
+                    entry.delayed > 0
+                      ? "text-red-700 dark:text-red-400 font-medium"
+                      : "text-slate-500 dark:text-slate-400"
+                  }
+                >
                   {entry.delayed} {t.performance.charts.delayed}
                 </span>
               </span>
             </div>
-            <div className="h-2.5 w-full bg-slate-100 rounded overflow-hidden flex">
+            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded overflow-hidden flex">
               <div
                 style={{ width: `${Math.max(0, totalPct - delayedPct)}%` }}
-                className="h-full bg-[#0F294A]"
+                className="h-full bg-[#0F294A] dark:bg-blue-500"
               />
               {delayedPct > 0 && (
-                <div style={{ width: `${delayedPct}%` }} className="h-full bg-red-500" />
+                <div
+                  style={{ width: `${delayedPct}%` }}
+                  className="h-full bg-red-500 dark:bg-red-400"
+                />
               )}
             </div>
           </div>
@@ -249,9 +264,9 @@ export function CategoryBreakdownChart({
       })}
     </div>
   );
-}
+});
 
-export function DelayAndWorkloadTrendChart({
+export const DelayAndWorkloadTrendChart = React.memo(function DelayAndWorkloadTrendChart({
   data,
   mode,
   language,
@@ -268,7 +283,7 @@ export function DelayAndWorkloadTrendChart({
 
   return (
     <div className="space-y-3">
-      <div className="h-44 flex items-end gap-3 pt-4 pb-2 border-b border-slate-200">
+      <div className="h-44 flex items-end gap-3 pt-4 pb-2 border-b border-slate-200 dark:border-slate-800">
         {data.map((point) => {
           const valA = mode === "delays" ? point.completedCount : point.totalHours;
           const valB = mode === "delays" ? point.delayedCount : 0;
@@ -278,24 +293,26 @@ export function DelayAndWorkloadTrendChart({
           return (
             <div key={point.monthKey} className="flex-1 h-full flex items-end justify-center gap-1">
               <div className="flex flex-col items-center justify-end h-full flex-1 max-w-[22px]">
-                <span className="text-[10px] font-mono-num text-slate-500 mb-1">
+                <span className="text-[10px] font-mono-num text-slate-500 dark:text-slate-400 mb-1">
                   {valA > 0 ? valA : ""}
                 </span>
                 <div
                   style={{ height: `${Math.max(valA > 0 ? 6 : 2, hA)}%` }}
                   className={`w-full rounded-t ${
-                    mode === "delays" ? "bg-blue-600" : "bg-[#0F294A]"
+                    mode === "delays"
+                      ? "bg-blue-600 dark:bg-blue-500"
+                      : "bg-[#0F294A] dark:bg-sky-400"
                   }`}
                 />
               </div>
               {mode === "delays" && (
                 <div className="flex flex-col items-center justify-end h-full flex-1 max-w-[22px]">
-                  <span className="text-[10px] font-mono-num text-red-600 mb-1">
+                  <span className="text-[10px] font-mono-num text-red-600 dark:text-red-400 mb-1">
                     {valB > 0 ? valB : ""}
                   </span>
                   <div
                     style={{ height: `${Math.max(valB > 0 ? 6 : 2, hB)}%` }}
-                    className="w-full rounded-t bg-red-500"
+                    className="w-full rounded-t bg-red-500 dark:bg-red-400"
                   />
                 </div>
               )}
@@ -305,23 +322,26 @@ export function DelayAndWorkloadTrendChart({
       </div>
       <div className="flex items-center gap-3">
         {data.map((point) => (
-          <div key={point.monthKey} className="flex-1 text-center text-xs text-slate-500">
+          <div
+            key={point.monthKey}
+            className="flex-1 text-center text-xs text-slate-500 dark:text-slate-400"
+          >
             {language === "ar" ? point.labelAr : point.labelEn}
           </div>
         ))}
       </div>
       {mode === "delays" && (
-        <div className="flex items-center gap-5 text-xs text-slate-600">
+        <div className="flex items-center gap-5 text-xs text-slate-600 dark:text-slate-400">
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-xs bg-blue-600" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-blue-600 dark:bg-blue-500" />
             {t.performance.kpi.completed}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-xs bg-red-500" />
+            <span className="w-2.5 h-2.5 rounded-xs bg-red-500 dark:bg-red-400" />
             {t.performance.charts.delayed}
           </span>
         </div>
       )}
     </div>
   );
-}
+});

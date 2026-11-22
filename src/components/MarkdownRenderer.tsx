@@ -55,7 +55,7 @@ function renderInline(text: string, isUser = false, depth = 0): React.ReactNode[
           className={`px-1.5 py-0.5 rounded text-[0.85em] font-mono-num font-medium ${
             isUser
               ? "bg-white/15 text-blue-100"
-              : "bg-slate-200/75 text-[#0F294A] border border-slate-300/60"
+              : "bg-slate-200/75 dark:bg-slate-800 text-[#0F294A] dark:text-blue-200 border border-slate-300/60 dark:border-slate-700"
           }`}
         >
           {token.slice(1, -1)}
@@ -72,7 +72,7 @@ function renderInline(text: string, isUser = false, depth = 0): React.ReactNode[
           className={`px-1.5 py-0.5 rounded text-[0.85em] font-mono-num ${
             isUser
               ? "bg-white/15 text-blue-100"
-              : "bg-blue-50 text-blue-900 border border-blue-200/70"
+              : "bg-blue-50 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 border border-blue-200/70 dark:border-blue-800/70"
           }`}
         >
           {cleanMathExpression(inner)}
@@ -82,7 +82,9 @@ function renderInline(text: string, isUser = false, depth = 0): React.ReactNode[
       parts.push(
         <strong
           key={key++}
-          className={isUser ? "font-semibold text-white" : "font-semibold text-[#0F294A]"}
+          className={
+            isUser ? "font-semibold text-white" : "font-semibold text-[#0F294A] dark:text-slate-100"
+          }
         >
           {renderInline(token.slice(2, -2), isUser, depth + 1)}
         </strong>
@@ -163,7 +165,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
         <pre
           key={blockKey++}
           dir="ltr"
-          className="my-2 p-3 rounded-lg bg-[#0F294A] text-slate-100 text-xs font-mono-num overflow-x-auto"
+          className="my-2 p-3 rounded-lg bg-[#0F294A] dark:bg-[#0B1120] border border-transparent dark:border-slate-800 text-slate-100 text-xs font-mono-num overflow-x-auto"
         >
           <code>{codeLines.join("\n")}</code>
         </pre>
@@ -193,7 +195,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
         <div
           key={blockKey++}
           dir="ltr"
-          className="my-2 px-3 py-2 rounded-lg bg-blue-50/70 border border-blue-200/70 text-xs font-mono-num text-[#0F294A] overflow-x-auto"
+          className="my-2 px-3 py-2 rounded-lg bg-blue-50/70 dark:bg-blue-950/50 border border-blue-200/70 dark:border-blue-800/70 text-xs font-mono-num text-[#0F294A] dark:text-blue-200 overflow-x-auto"
         >
           {cleanMathExpression(mathLines.join(" "))}
         </div>
@@ -203,7 +205,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
 
     // Horizontal rule
     if (HR_RE.test(trimmed)) {
-      blocks.push(<hr key={blockKey++} className="my-3 border-slate-200" />);
+      blocks.push(<hr key={blockKey++} className="my-3 border-slate-200 dark:border-slate-800" />);
       i++;
       continue;
     }
@@ -216,10 +218,10 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
       if (text) {
         const headingClass =
           level === 1
-            ? "text-base font-bold text-[#0F294A] mt-3 mb-1.5"
+            ? "text-base font-bold text-[#0F294A] dark:text-slate-100 mt-3 mb-1.5"
             : level === 2
-            ? "text-sm font-bold text-[#0F294A] mt-3 mb-1"
-            : "text-xs font-bold uppercase tracking-wide text-blue-800 mt-2.5 mb-1";
+            ? "text-sm font-bold text-[#0F294A] dark:text-slate-100 mt-3 mb-1"
+            : "text-xs font-bold uppercase tracking-wide text-blue-800 dark:text-blue-400 mt-2.5 mb-1";
         blocks.push(
           <div
             key={blockKey++}
@@ -245,11 +247,11 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
       blocks.push(
         <div
           key={blockKey++}
-          className="my-2.5 overflow-x-auto rounded-lg border border-slate-200 bg-white"
+          className="my-2.5 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827]"
         >
           <table className="w-full text-start border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-100/80 border-b border-slate-200 text-[#0F294A]">
+              <tr className="bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-[#0F294A] dark:text-slate-100">
                 {headers.map((h, idx) => (
                   <th key={idx} className="py-2 px-3 text-start font-semibold whitespace-nowrap">
                     {renderInline(h, false)}
@@ -257,9 +259,9 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
               {rows.map((r, rIdx) => (
-                <tr key={rIdx} className="hover:bg-slate-50/70">
+                <tr key={rIdx} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
                   {headers.map((_, cIdx) => (
                     <td key={cIdx} className="py-2 px-3 align-top">
                       {renderInline(r[cIdx] ?? "", false)}
@@ -284,7 +286,7 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({
       blocks.push(
         <blockquote
           key={blockKey++}
-          className="my-2 ps-3 border-s-2 border-blue-400 text-slate-600 text-xs italic space-y-1"
+          className="my-2 ps-3 border-s-2 border-blue-400 dark:border-blue-500 text-slate-600 dark:text-slate-300 text-xs italic space-y-1"
         >
           {quoteLines.map((ql, idx) => (
             <p key={idx}>{renderInline(ql, isUser)}</p>

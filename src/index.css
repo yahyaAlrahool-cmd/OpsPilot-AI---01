@@ -1,12 +1,41 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
   :root {
+    color-scheme: light;
+    --ops-bg: #F8FAFC;
+    --ops-surface: #FFFFFF;
+    --ops-surface-elevated: #F1F5F9;
+    --ops-border: #E2E8F0;
+    --ops-text-primary: #0F172A;
+    --ops-text-secondary: #475569;
+    --ops-text-muted: #64748B;
+    --ops-brand: #0F294A;
+    --ops-primary: #2563EB;
     font-family: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --ops-bg: #0B1120;
+    --ops-surface: #111827;
+    --ops-surface-elevated: #162033;
+    --ops-border: #1E293B;
+    --ops-text-primary: #F8FAFC;
+    --ops-text-secondary: #CBD5E1;
+    --ops-text-muted: #94A3B8;
+    --ops-brand: #E2E8F0;
+    --ops-primary: #3B82F6;
   }
 
   html[dir="rtl"] {
     font-family: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    background-color: var(--ops-bg);
+    color: var(--ops-text-primary);
   }
 
   .font-mono-num {

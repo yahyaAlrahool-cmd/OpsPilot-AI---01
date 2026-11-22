@@ -2,6 +2,7 @@ import {
   Employee,
   EmployeeWorkloadSummary,
   Language,
+  OperationalIntelligenceReport,
   OperationalMetrics,
   Project,
   ProjectRiskAssessment,
@@ -24,6 +25,7 @@ export interface WorkspaceSnapshot {
   risks: ProjectRiskAssessment[];
   workloads: EmployeeWorkloadSummary[];
   rebalanceSuggestions: RebalanceSuggestion[];
+  intelligence?: OperationalIntelligenceReport;
   signature: string;
 }
 
@@ -42,7 +44,7 @@ const GREETING_RE =
   /^\s*(hello|hi|hey|good morning|good afternoon|good evening|greetings|howdy|yo|thanks|thank you|can you respond|are you there|can you hear me|test|ping|مرحبا|أهلا|اهلا|السلام عليكم|صباح الخير|مساء الخير|كيف حالك|شكرا|شكراً|هل تستطيع الرد|هل أنت هنا|تجربة)[\s!?.،؟]*$/i;
 
 const COMPLEX_RE =
-  /\b(complete operational analysis|full operational|executive summary|summary of today|overall operations|comprehensive|all bottlenecks|full review|everything)\b|(تحليل تشغيلي كامل|تحليل كامل|ملخص شامل|ملخص لعمليات اليوم|الوضع العام|نظرة شاملة)/i;
+  /\b(complete operational analysis|full operational|executive summary|summary of today|overall operations|comprehensive|all bottlenecks|full review|everything|entire workspace|whole workspace|full workspace)\b|(تحليل تشغيلي كامل|تحليل كامل|ملخص شامل|ملخص لعمليات اليوم|الوضع العام|نظرة شاملة|مساحة العمل بالكامل)/i;
 
 const WORKLOAD_RE =
   /\b(overload|overloaded|workload|capacity|utilization|busy|available|bandwidth|rebalance|reassign|allocation|hours|who is working|team load|tariq|nadia|omar|lina|kareem)\b|(ضغط|عبء|أعباء|طاقة|سعة|إشغال|مزدحم|متاح|إعادة توزيع|إسناد|ساعات|طارق|نادية|عمر|لينا|كريم)/i;
@@ -194,6 +196,11 @@ export function buildTargetedChatContext(
         skillMatch: r.skillMatch,
         requiresManagerVerification: r.requiresManagerVerification,
       })),
+      capacityNarrative: workspace.intelligence
+        ? language === "ar"
+          ? workspace.intelligence.capacityRebalanceNarrativeAr
+          : workspace.intelligence.capacityRebalanceNarrativeEn
+        : undefined,
     };
   } else if (intent === "risk_overdue") {
     context = {
@@ -206,7 +213,14 @@ export function buildTargetedChatContext(
         activeProjects: workspace.metrics.activeProjects,
         overdueProjects: workspace.metrics.overdueProjects,
         atRiskProjects: workspace.metrics.atRiskProjects,
+        deadlineCollisionCount7d: workspace.intelligence?.deadlineCollisionCount7d,
+        overdueTotalHours: workspace.intelligence?.overdueTotalHours,
       },
+      operationalPatterns: workspace.intelligence?.proactiveInsights.map((p) => ({
+        title: language === "ar" ? p.titleAr : p.titleEn,
+        detail: language === "ar" ? p.detailAr : p.detailEn,
+        evidence: language === "ar" ? p.evidenceAr : p.evidenceEn,
+      })),
       activeRisks: workspace.risks.map((r) => ({
         id: r.project.id,
         title: language === "ar" ? r.project.titleAr || r.project.title : r.project.title,
@@ -344,6 +358,11 @@ export function buildTargetedChatContext(
         to: language === "ar" ? r.toEmployeeNameAr : r.toEmployeeName,
         hoursMoved: r.hoursMoved,
         requiresManagerVerification: r.requiresManagerVerification,
+      })),
+      operationalPatterns: workspace.intelligence?.proactiveInsights.map((p) => ({
+        title: language === "ar" ? p.titleAr : p.titleEn,
+        detail: language === "ar" ? p.detailAr : p.detailEn,
+        evidence: language === "ar" ? p.evidenceAr : p.evidenceEn,
       })),
     };
   }

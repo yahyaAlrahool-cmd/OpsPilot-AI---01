@@ -311,57 +311,65 @@ Do NOT invent or recite unrequested project statistics.`,
   const h = isArabic
     ? {
         direct: "### 1. الإجابة المباشرة",
-        data: "### 2. البيانات الداعمة",
-        impact: "### 3. الأثر التشغيلي",
-        actions: "### 4. الإجراءات الموصى بها",
+        evidence: "### 2. الأدلة الداعمة",
+        matters: "### 3. لماذا يهم هذا",
+        action: "### 4. الإجراء الموصى به",
+        priority: "### 5. الأولوية",
+        missingPhrase: "لا تحتوي بيانات مساحة العمل الحالية على معلومات كافية للإجابة بدقة على هذا الجزء.",
       }
     : {
         direct: "### 1. Direct Answer",
-        data: "### 2. Supporting Data",
-        impact: "### 3. Operational Impact",
-        actions: "### 4. Recommended Actions",
+        evidence: "### 2. Supporting Evidence",
+        matters: "### 3. Why It Matters",
+        action: "### 4. Recommended Action",
+        priority: "### 5. Priority",
+        missingPhrase: "The workspace data does not contain enough information to determine this reliably.",
       };
 
   const intentFormatGuidance: Record<Exclude<ChatIntent, "greeting">, string> = {
     workload: `FOCUS: Team Workload & Capacity.
-Answer directly using ONLY the teamWorkload, activeProjects, and rebalanceCandidates in the JSON.
+Answer directly using ONLY the teamWorkload, activeProjects, rebalanceCandidates, and capacityNarrative in the JSON.
 - Cite exact utilization %, activeWorkloadHours, weeklyCapacityHours, activeProjectsCount, and overdueProjectsCount.
 - State the calculation formula when helpful: remaining hours / weekly capacity * 100.
 - If suggesting rebalancing, explicitly note whether skillsVerified is true or requires manager verification.
-- Format cleanly with these exact headings in ${langName}:
+- Format concisely with these Markdown headings in ${langName}:
 ${h.direct}
-${h.data}
-${h.impact}
-${h.actions}`,
+${h.evidence}
+${h.matters}
+${h.action}
+${h.priority}`,
     risk_overdue: `FOCUS: Project Risks, Overdue Deliveries & Priorities.
-Answer directly using ONLY the activeRisks / summaryCounts JSON.
-- Cite exact project IDs (e.g. \`OP-1041\`), titles, clients, owners, deadlines, daysUntilDeadline, progress %, remainingHours, and riskScore.
-- Clearly distinguish Confirmed Data / Calculated Metrics from AI Recommendations.
-- Format cleanly with these exact headings in ${langName}:
+Answer directly using ONLY the activeRisks, summaryCounts, and operationalPatterns JSON.
+- Cite exact project IDs (e.g. \`OP-1041\`), titles, clients, owners, deadlines, daysUntilDeadline, progress %, remainingHours, riskScore, and recorded notes/blockers.
+- Clearly distinguish Confirmed Data / Calculated Metrics from AI Interpretation / Recommendations.
+- If the user asks for a short specific lookup (e.g., a single highest-risk project with 4 fields or drafting a client follow-up message), keep the response crisp and directly satisfy their exact format. Otherwise structure cleanly with:
 ${h.direct}
-${h.data}
-${h.impact}
-${h.actions}`,
+${h.evidence}
+${h.matters}
+${h.action}
+${h.priority}`,
     performance: `FOCUS: Delivery Performance, Completion Rates & Trends.
 Answer directly using ONLY the metrics, formulas, completedProjectsRecord, and activeOverdueProjects JSON.
 - Show the exact formula and numerator/denominator behind rates (e.g., On-Time Completion Rate = completedOnTimeCount / completedProjects, excluding active projects).
-- Cite exact counts, percentages, and project IDs behind delays.
-- Format cleanly with these exact headings in ${langName}:
+- Cite exact counts, percentages, and project IDs behind delays; explicitly note when historical data is limited.
+- Structure cleanly with:
 ${h.direct}
-${h.data}
-${h.impact}
-${h.actions}`,
+${h.evidence}
+${h.matters}
+${h.action}
+${h.priority}`,
     projects_lookup: `FOCUS: Project & Client Lookup.
 Answer directly and concisely using ONLY the projects and counts JSON. Cite exact IDs, statuses, progress %, owners, and deadlines. Use a clean Markdown list or compact table if listing 3+ projects.`,
     complex_analysis: `FOCUS: Comprehensive Operational Analysis.
-Synthesize project execution risks, overdue items, team overload, and delivery performance using ONLY the live JSON.
-- Clearly separate Confirmed Data / Calculated Metrics from AI Recommendations.
-- Cite exact project IDs, employee utilization %, deadlines, and formulas where applicable.
-- Structure cleanly in Markdown with these exact headings in ${langName}:
+Synthesize project execution risks, overdue items, team overload, operationalPatterns, and delivery performance using ONLY the live JSON.
+- Clearly label Confirmed Data vs. Calculated Metrics vs. AI Recommendations.
+- Cite exact project IDs, employee utilization %, deadlines, recorded notes/blockers, and formulas where applicable.
+- Structure concisely in Markdown with these headings in ${langName}:
 ${h.direct}
-${h.data}
-${h.impact}
-${h.actions}`,
+${h.evidence}
+${h.matters}
+${h.action}
+${h.priority}`,
   };
 
   return {
@@ -369,14 +377,15 @@ ${h.actions}`,
 Respond strictly in ${langName}.
 ${intentFormatGuidance[intent]}
 
-STRICT GROUNDING RULES:
-1. Use ONLY the LIVE WORKSPACE DATA below. Never invent projects, deadlines, blockers, budgets, or metrics.
-2. If requested information is absent from the workspace records, explicitly state that it is not recorded.
-3. Wrap project IDs in backticks like \`OP-1041\` and use clean Markdown (headings, bold, bullets, compact tables where helpful).
+STRICT EPISTEMIC & GROUNDING RULES:
+1. Use ONLY the LIVE WORKSPACE DATA below. Never invent projects, deadlines, blockers, budgets, revenue figures, or metrics.
+2. Distinguish clearly between Confirmed Data (facts in records), Calculated Metrics (riskScore, utilizationPct, rates), and AI Recommendations.
+3. If requested information is absent or notes are empty, explicitly state: "${h.missingPhrase}" (or note "[No notes recorded]" for that project).
+4. Wrap project IDs in backticks like \`OP-1041\` and keep Markdown concise, high-signal, and free of filler.
 
 LIVE WORKSPACE DATA:
 ${contextJson}`,
-    maxOutputTokens: intent === "complex_analysis" ? 1500 : 900,
+    maxOutputTokens: intent === "complex_analysis" ? 1500 : 950,
   };
 }
 

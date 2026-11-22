@@ -1,8 +1,11 @@
 import {
+  AttentionItem,
   Employee,
   EmployeeWorkloadSummary,
   MonthlyTrendPoint,
+  OperationalIntelligenceReport,
   OperationalMetrics,
+  ProactiveInsight,
   Project,
   ProjectRiskAssessment,
   ProjectStatus,
@@ -483,3 +486,260 @@ export function computeOperationalMetrics(
     monthlyTrends,
   };
 }
+
+export function extractProjectBlocker(project: Project): {
+  hasRecordedBlocker: boolean;
+  en: string;
+  ar: string;
+} {
+  const noteEn = project.notes.trim();
+  const noteAr = project.notesAr.trim();
+  if (!noteEn && !noteAr) {
+    return {
+      hasRecordedBlocker: false,
+      en: "No blocker or execution note recorded (visibility gap)",
+      ar: "لا توجد ملاحظات تنفيذ أو عوائق مسجلة (نقص في الرؤية)",
+    };
+  }
+  return {
+    hasRecordedBlocker: true,
+    en: noteEn || noteAr,
+    ar: noteAr || noteEn,
+  };
+}
+
+export function computeOperationalIntelligence(
+  projects: Project[],
+  employees: Employee[],
+  metrics: OperationalMetrics,
+  workloads: EmployeeWorkloadSummary[],
+  risks: ProjectRiskAssessment[],
+  todayISO = getTodayISO()
+): OperationalIntelligenceReport {
+  const workloadMap = new Map(workloads.map((w) => [w.employee.id, w]));
+
+  const attentionCandidates: AttentionItem[] = risks
+    .filter((r) => r.riskScore >= 25 || r.daysUntilDeadline <= 4)
+    .map((r) => {
+      const ownerWorkload = r.owner ? workloadMap.get(r.owner.id) : undefined;
+      const ownerUtil = ownerWorkload?.utilizationPct ?? 0;
+
+      // Priority = holistic Risk × Urgency × Impact proxy (strictly derived from workspace fields)
+      const urgencyScore =
+        r.daysUntilDeadline < 0
+          ? Math.min(100, 82 + Math.abs(r.daysUntilDeadline) * 3)
+          : Math.max(10, 80 - r.daysUntilDeadline * 7);
+
+      const priorityWeight =
+        r.project.priority === "critical"
+          ? 28
+          : r.project.priority === "high"
+          ? 20
+          : r.project.priority === "medium"
+          ? 12
+          : 6;
+      const workloadImpact = Math.min(45, r.remainingWorkloadHours * 1.4);
+      const overloadImpact = ownerWorkload?.capacityStatus === "overloaded" ? 27 : 0;
+      const impactScore = Math.min(100, priorityWeight + workloadImpact + overloadImpact);
+
+      const priorityRankScore = Math.round(
+        r.riskScore * 0.45 + urgencyScore * 0.35 + impactScore * 0.2
+      );
+
+      const blocker = extractProjectBlocker(r.project);
+      const ownerName = r.owner?.name ?? "Unassigned";
+      const ownerNameAr = r.owner?.nameAr ?? "غير محدد";
+
+      let whyItMattersEn = r.impactEn;
+      let whyItMattersAr = r.impactAr;
+
+      if (r.daysUntilDeadline < 0 && ownerWorkload?.capacityStatus === "overloaded") {
+        whyItMattersEn = `${Math.abs(r.daysUntilDeadline)}d overdue with ${r.remainingWorkloadHours}h remaining while ${ownerName} is at ${ownerUtil}% load — compounding downstream delivery slippage.`;
+        whyItMattersAr = `متأخر ${Math.abs(r.daysUntilDeadline)} يوم مع بقاء ${r.remainingWorkloadHours} ساعة عمل بينما ${ownerNameAr} عند ضغط ${ownerUtil}% — مما يضاعف خطر تفاقم التأخير.`;
+      } else if (ownerWorkload?.capacityStatus === "overloaded") {
+        whyItMattersEn = `${r.remainingWorkloadHours}h due by ${r.project.deadline} while owner ${ownerName} operates at ${ownerUtil}% capacity (${ownerWorkload.activeProjectsCount} active items).`;
+        whyItMattersAr = `يتطلب ${r.remainingWorkloadHours} ساعة قبل ${r.project.deadline} بينما يعمل ${ownerNameAr} بطاقة ${ownerUtil}% (${ownerWorkload.activeProjectsCount} مشاريع نشطة).`;
+      }
+
+      return {
+        projectId: r.project.id,
+        project: r.project,
+        ownerName,
+        ownerNameAr,
+        ownerUtilizationPct: ownerUtil,
+        riskScore: r.riskScore,
+        riskLevel: r.riskLevel,
+        priorityRankScore,
+        daysUntilDeadline: r.daysUntilDeadline,
+        remainingWorkloadHours: r.remainingWorkloadHours,
+        blockerEn: blocker.en,
+        blockerAr: blocker.ar,
+        hasRecordedBlocker: blocker.hasRecordedBlocker,
+        whyItMattersEn,
+        whyItMattersAr,
+        recommendedActionEn: r.recommendedActionEn,
+        recommendedActionAr: r.recommendedActionAr,
+      };
+    })
+    .sort((a, b) => b.priorityRankScore - a.priorityRankScore || b.riskScore - a.riskScore);
+
+  const immediateAttention = attentionCandidates.slice(0, 5);
+
+  const activeProjects = projects.filter((p) => p.status !== "completed");
+  const overdueRisks = risks.filter((r) => r.daysUntilDeadline < 0);
+  const overdueTotalHours = overdueRisks.reduce((s, r) => s + r.remainingWorkloadHours, 0);
+  const window7dRisks = risks.filter((r) => r.daysUntilDeadline <= 7);
+  const unrecordedNotesCount = activeProjects.filter(
+    (p) => !p.notes.trim() && !p.notesAr.trim()
+  ).length;
+
+  const overloaded = workloads
+    .filter((w) => w.capacityStatus === "overloaded")
+    .sort((a, b) => b.utilizationPct - a.utilizationPct);
+  const available = workloads
+    .filter((w) => w.capacityStatus === "available" || w.utilizationPct < 75)
+    .sort((a, b) => a.utilizationPct - b.utilizationPct);
+
+  const overloadedOwnersSummaryEn =
+    overloaded.length > 0
+      ? overloaded
+          .map(
+            (w) =>
+              `${w.employee.name} (${w.utilizationPct}%, ${w.activeWorkloadHours}h across ${w.activeProjectsCount} active projects)`
+          )
+          .join("; ")
+      : "No team members currently exceed capacity thresholds.";
+
+  const overloadedOwnersSummaryAr =
+    overloaded.length > 0
+      ? overloaded
+          .map(
+            (w) =>
+              `${w.employee.nameAr} (${w.utilizationPct}%، ${w.activeWorkloadHours} ساعة عبر ${w.activeProjectsCount} مشاريع نشطة)`
+          )
+          .join("؛ ")
+      : "لا يوجد أعضاء فريق يتجاوزون حدود السعة حالياً.";
+
+  const capacityRebalanceNarrativeEn =
+    overloaded.length > 0 && available.length > 0
+      ? `${overloaded[0].employee.name} is at ${overloaded[0].utilizationPct}% utilization with ${overloaded[0].overdueProjectsCount} overdue project(s), while ${available
+          .slice(0, 2)
+          .map((a) => `${a.employee.name} (${a.utilizationPct}%)`)
+          .join(" and ")} have open bandwidth.`
+      : overloaded.length > 0
+      ? `${overloaded[0].employee.name} is at ${overloaded[0].utilizationPct}% capacity with no under-utilized teammate below 75% to absorb load without reprioritizing deadlines.`
+      : "Team capacity is distributed within optimal bounds across active deliverables.";
+
+  const capacityRebalanceNarrativeAr =
+    overloaded.length > 0 && available.length > 0
+      ? `${overloaded[0].employee.nameAr} عند نسبة إشغال ${overloaded[0].utilizationPct}% مع ${overloaded[0].overdueProjectsCount} مشروع متأخر، بينما يتوفر هامش استيعاب لدى ${available
+          .slice(0, 2)
+          .map((a) => `${a.employee.nameAr} (${a.utilizationPct}%)`)
+          .join(" و")}.`
+      : overloaded.length > 0
+      ? `${overloaded[0].employee.nameAr} عند ${overloaded[0].utilizationPct}% من الطاقة ولا يوجد عضو أقل من 75% لاستيعاب العبء دون إعادة جدولة المواعيد.`
+      : "توزيع طاقة الفريق متوازن ضمن الحدود المثلى عبر المشاريع النشطة.";
+
+  const proactiveInsights: ProactiveInsight[] = [];
+
+  // 1. Risk Concentration by Owner
+  const highRisksByOwner = new Map<string, ProjectRiskAssessment[]>();
+  for (const r of risks) {
+    if (r.riskLevel === "critical" || r.riskLevel === "high") {
+      const id = r.project.assignedEmployeeId;
+      const list = highRisksByOwner.get(id) ?? [];
+      list.push(r);
+      highRisksByOwner.set(id, list);
+    }
+  }
+  const topRiskOwnerEntry = [...highRisksByOwner.entries()].sort(
+    (a, b) => b[1].length - a[1].length
+  )[0];
+  if (topRiskOwnerEntry && topRiskOwnerEntry[1].length >= 2) {
+    const ownerEmp = employees.find((e) => e.id === topRiskOwnerEntry[0]);
+    const ownerLoad = workloadMap.get(topRiskOwnerEntry[0]);
+    const list = topRiskOwnerEntry[1];
+    const ids = list.map((x) => x.project.id).join(", ");
+    proactiveInsights.push({
+      id: "insight-risk-concentration",
+      kind: "concentration",
+      severity: "critical",
+      titleEn: "Risk Concentration on Single Owner",
+      titleAr: "تركّز المخاطر لدى مسؤول واحد",
+      detailEn: `${ownerEmp?.name ?? topRiskOwnerEntry[0]} holds ${list.length} of ${metrics.atRiskProjects} high/critical risk projects while running at ${ownerLoad?.utilizationPct ?? 0}% capacity.`,
+      detailAr: `يحمل ${ownerEmp?.nameAr ?? topRiskOwnerEntry[0]} ${list.length} من أصل ${metrics.atRiskProjects} مشاريع مرتفعة/حرجة المخاطر مع نسبة إشغال ${ownerLoad?.utilizationPct ?? 0}%.`,
+      evidenceEn: `Projects: ${ids} · ${ownerLoad?.activeWorkloadHours ?? 0}h / ${ownerEmp?.weeklyCapacityHours ?? 0}h weekly cap`,
+      evidenceAr: `المشاريع: ${ids} · ${ownerLoad?.activeWorkloadHours ?? 0}س / ${ownerEmp?.weeklyCapacityHours ?? 0}س طاقة أسبوعية`,
+    });
+  }
+
+  // 2. 7-Day Deadline Collision Window
+  if (window7dRisks.length >= 3) {
+    const windowHours = window7dRisks.reduce((s, r) => s + r.remainingWorkloadHours, 0);
+    const ids = window7dRisks.slice(0, 5).map((r) => r.project.id).join(", ");
+    proactiveInsights.push({
+      id: "insight-deadline-collision",
+      kind: "deadline_collision",
+      severity: overdueRisks.length > 0 ? "critical" : "warning",
+      titleEn: "7-Day Deadline Collision Window",
+      titleAr: "تزاحم المواعيد النهائية خلال ٧ أيام",
+      detailEn: `${window7dRisks.length} active projects (${overdueRisks.length} already overdue) compete for ${windowHours}h of remaining work inside the next 7 days.`,
+      detailAr: `${window7dRisks.length} مشاريع نشطة (${overdueRisks.length} متأخرة بالفعل) تتزاحم على ${windowHours} ساعة عمل متبقية خلال ٧ أيام.`,
+      evidenceEn: `Scope window <= ${addDaysQuick(todayISO, 7)}: ${ids}`,
+      evidenceAr: `النافذة الزمنية حتى ${addDaysQuick(todayISO, 7)}: ${ids}`,
+    });
+  }
+
+  // 3. Capacity Imbalance / Rebalance Headroom
+  if (overloaded.length > 0) {
+    proactiveInsights.push({
+      id: "insight-capacity-imbalance",
+      kind: "capacity",
+      severity: "warning",
+      titleEn: "Capacity Bottleneck & Absorbable Headroom",
+      titleAr: "اختناق السعة وهامش إعادة التوزيع",
+      detailEn: capacityRebalanceNarrativeEn,
+      detailAr: capacityRebalanceNarrativeAr,
+      evidenceEn: `Overloaded: ${overloaded.length} · Available: ${available.length}`,
+      evidenceAr: `ضغط زائد: ${overloaded.length} · سعة متاحة: ${available.length}`,
+    });
+  }
+
+  // 4. Recurring External Blockers & Visibility Gaps
+  const awaitingExternal = activeProjects.filter((p) =>
+    /(awaiting|waiting|pending|stalled|confirm|sign-off|feedback|credentials)/i.test(p.notes)
+  );
+  if (awaitingExternal.length > 0 || unrecordedNotesCount > 0) {
+    const extIds = awaitingExternal.map((p) => p.id).join(", ");
+    proactiveInsights.push({
+      id: "insight-blockers-visibility",
+      kind: "blockers",
+      severity: unrecordedNotesCount >= 2 ? "warning" : "info",
+      titleEn: "Dependency Blockers & Note Visibility",
+      titleAr: "عوائق الاعتمادية وفجوات التوثيق",
+      detailEn: `${awaitingExternal.length} active project(s) cite pending client/external inputs in recorded notes; ${unrecordedNotesCount} active project(s) have no execution notes logged.`,
+      detailAr: `${awaitingExternal.length} مشاريع نشطة تشير إلى انتظار مدخلات عميل/خارجية في الملاحظات؛ و${unrecordedNotesCount} مشاريع بدون ملاحظات تنفيذ مسجلة.`,
+      evidenceEn: extIds ? `Recorded waits: ${extIds}` : `${unrecordedNotesCount} missing notes`,
+      evidenceAr: extIds ? `بانتظار مدخلات: ${extIds}` : `${unrecordedNotesCount} بدون ملاحظات`,
+    });
+  }
+
+  return {
+    immediateAttention,
+    proactiveInsights: proactiveInsights.slice(0, 4),
+    overloadedOwnersSummaryEn,
+    overloadedOwnersSummaryAr,
+    capacityRebalanceNarrativeEn,
+    capacityRebalanceNarrativeAr,
+    deadlineCollisionCount7d: window7dRisks.length,
+    overdueTotalHours,
+    unrecordedNotesCount,
+  };
+}
+
+function addDaysQuick(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+

@@ -53,14 +53,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div
           dir={lang === "ar" ? "rtl" : "ltr"}
-          className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6"
+          className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1120] flex items-center justify-center p-6"
         >
-          <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl p-6 space-y-4 text-center">
-            <div className="w-10 h-10 rounded-lg bg-red-50 border border-red-200 text-red-700 flex items-center justify-center mx-auto">
+          <div className="max-w-md w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-6 space-y-4 text-center">
+            <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <h1 className="text-base font-bold text-[#0F294A]">{t.brand}</h1>
-            <p className="text-sm text-slate-600">{t.aiStates.errorMessage}</p>
+            <h1 className="text-base font-bold text-[#0F294A] dark:text-slate-100">{t.brand}</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{t.aiStates.errorMessage}</p>
             <button
               type="button"
               onClick={this.handleReset}
@@ -75,7 +75,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-xs text-red-700 dark:text-red-300">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{t.aiStates.errorMessage}</span>
@@ -83,7 +83,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         <button
           type="button"
           onClick={this.handleReset}
-          className="px-3 py-1.5 bg-white border border-red-200 rounded font-medium text-red-700 hover:bg-red-100 whitespace-nowrap shrink-0 cursor-pointer"
+          className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded font-medium text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950/60 whitespace-nowrap shrink-0 cursor-pointer"
         >
           {t.aiStates.retry}
         </button>

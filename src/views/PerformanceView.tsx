@@ -24,7 +24,7 @@ interface PerformanceViewProps {
   onCancelInsights: () => void;
 }
 
-export function PerformanceView({
+export const PerformanceView = React.memo(function PerformanceView({
   language,
   metrics,
   insights,
@@ -47,7 +47,10 @@ export function PerformanceView({
           ? `${metrics.completedOnTimeCount} من أصل ${metrics.completedProjects} مكتملة`
           : `${metrics.completedOnTimeCount} / ${metrics.completedProjects} completed`,
       formula: formulas.onTimeCompletionRate,
-      tone: metrics.onTimeCompletionRate >= 75 ? "text-emerald-700" : "text-amber-700",
+      tone:
+        metrics.onTimeCompletionRate >= 75
+          ? "text-emerald-700 dark:text-emerald-400"
+          : "text-amber-700 dark:text-amber-400",
     },
     {
       label: t.performance.kpi.avgTime,
@@ -57,7 +60,7 @@ export function PerformanceView({
           ? `${metrics.completedProjects} مشروع مكتمل`
           : `${metrics.completedProjects} completed`,
       formula: "",
-      tone: "text-[#0F294A]",
+      tone: "text-[#0F294A] dark:text-slate-100",
     },
     {
       label: t.performance.kpi.volume,
@@ -67,14 +70,14 @@ export function PerformanceView({
           ? `${metrics.activeProjects} نشط · ${metrics.completedProjects} مكتمل`
           : `${metrics.activeProjects} active · ${metrics.completedProjects} done`,
       formula: formulas.activeProjects,
-      tone: "text-blue-800",
+      tone: "text-blue-800 dark:text-blue-400",
     },
     {
       label: t.performance.kpi.completed,
       value: metrics.completedProjects,
       sub: `${metrics.completionRate}% ${t.dashboard.kpi.completionRate}`,
       formula: formulas.completionRate,
-      tone: "text-emerald-700",
+      tone: "text-emerald-700 dark:text-emerald-400",
     },
     {
       label: t.performance.kpi.delayed,
@@ -84,7 +87,10 @@ export function PerformanceView({
           ? `${metrics.overdueProjects} متأخر نشط + ${metrics.completedLateCount} متأخر مكتمل`
           : `${metrics.overdueProjects} active + ${metrics.completedLateCount} late done`,
       formula: formulas.totalDelayedProjects,
-      tone: metrics.totalDelayedProjects > 0 ? "text-red-700" : "text-slate-700",
+      tone:
+        metrics.totalDelayedProjects > 0
+          ? "text-red-700 dark:text-red-400"
+          : "text-slate-700 dark:text-slate-300",
     },
   ];
 
@@ -97,19 +103,21 @@ export function PerformanceView({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#0F294A]">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F294A] dark:text-slate-100">
             {t.performance.title}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">{t.performance.subtitle}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t.performance.subtitle}
+          </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {isAnalyzing && (
             <button
               type="button"
               onClick={onCancelInsights}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
             >
-              <XCircle className="w-3.5 h-3.5 text-slate-500" />
+              <XCircle className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               <span>{t.aiStates.cancel}</span>
             </button>
           )}
@@ -131,8 +139,15 @@ export function PerformanceView({
 
       {/* Factual Metrics Section — always renders deterministically */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-slate-500">{t.performance.factualHeader}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {t.performance.factualHeader}
+            </h2>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+              {t.performance.insights.historicalNote}
+            </p>
+          </div>
           <EpistemicTag kind="confirmed" label={t.epistemic.confirmedData} />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -140,11 +155,13 @@ export function PerformanceView({
             <div
               key={k.label}
               title={k.formula || undefined}
-              className="bg-white border border-slate-200 rounded-xl p-4"
+              className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-4"
             >
-              <div className="text-xs text-slate-500">{k.label}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{k.label}</div>
               <div className={`text-2xl font-bold font-mono-num mt-2 ${k.tone}`}>{k.value}</div>
-              <div className="text-[11px] text-slate-400 mt-1 font-mono-num">{k.sub}</div>
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-mono-num">
+                {k.sub}
+              </div>
             </div>
           ))}
         </div>
@@ -152,13 +169,15 @@ export function PerformanceView({
 
       {/* Deterministic Charts — always render cleanly */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-[#0F294A]">{t.performance.charts.byCategory}</h3>
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[#0F294A] dark:text-slate-100">
+            {t.performance.charts.byCategory}
+          </h3>
           <CategoryBreakdownChart categoryCounts={metrics.categoryCounts} language={language} />
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-[#0F294A]">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[#0F294A] dark:text-slate-100">
             {t.performance.charts.delayTrends}
           </h3>
           <DelayAndWorkloadTrendChart
@@ -168,8 +187,8 @@ export function PerformanceView({
           />
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-[#0F294A]">
+        <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-[#0F294A] dark:text-slate-100">
             {t.performance.charts.workloadTrends}
           </h3>
           <DelayAndWorkloadTrendChart
@@ -181,14 +200,16 @@ export function PerformanceView({
       </section>
 
       {/* AI Interpretation Section — Failure-safe & isolated */}
-      <section className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70">
+      <section className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 bg-slate-50/70 dark:bg-[#162033]">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-700" />
-            <h2 className="text-sm font-semibold text-[#0F294A]">{t.performance.aiHeader}</h2>
+            <Sparkles className="w-4 h-4 text-blue-700 dark:text-blue-400" />
+            <h2 className="text-sm font-semibold text-[#0F294A] dark:text-slate-100">
+              {t.performance.aiHeader}
+            </h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-medium text-slate-500">
+            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
               {t.aiStates.statusLabels[status]}
             </span>
             <EpistemicTag kind="prediction" label={t.epistemic.aiPrediction} />
@@ -199,24 +220,26 @@ export function PerformanceView({
           <ErrorBoundary variant="panel" language={language} onRetry={onGenerateInsights}>
             {status === "analyzing" ? (
               <div className="space-y-3 animate-pulse">
-                <div className="h-4 bg-slate-100 rounded w-1/2" />
+                <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="h-28 bg-slate-100 rounded-lg" />
-                  <div className="h-28 bg-slate-100 rounded-lg" />
+                  <div className="h-28 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                  <div className="h-28 bg-slate-100 dark:bg-slate-800 rounded-lg" />
                 </div>
                 <div className="flex items-center justify-between gap-3 pt-1">
-                  <p className="text-xs text-slate-500">{t.performance.generating}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t.performance.generating}
+                  </p>
                   <button
                     type="button"
                     onClick={onCancelInsights}
-                    className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     {t.aiStates.cancel}
                   </button>
                 </div>
               </div>
             ) : status === "canceled" ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 text-xs text-amber-800 dark:text-amber-300">
                 <div className="flex items-center gap-2">
                   <XCircle className="w-4 h-4 shrink-0" />
                   <span>{error || t.aiStates.canceledMessage}</span>
@@ -224,13 +247,13 @@ export function PerformanceView({
                 <button
                   type="button"
                   onClick={onGenerateInsights}
-                  className="px-3 py-1.5 bg-white border border-amber-300 rounded font-medium text-amber-800 hover:bg-amber-100 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-800 rounded font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/60 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {t.aiStates.retry}
                 </button>
               </div>
             ) : status === "error" ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/70 text-xs text-red-700 dark:text-red-300">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>
@@ -243,7 +266,7 @@ export function PerformanceView({
                 <button
                   type="button"
                   onClick={onGenerateInsights}
-                  className="px-3 py-1.5 bg-white border border-red-200 rounded font-medium text-red-700 hover:bg-red-100 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-3 py-1.5 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded font-medium text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-950/60 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {t.aiStates.retry}
                 </button>
@@ -251,58 +274,68 @@ export function PerformanceView({
             ) : status === "success" && insights ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <h3 className="text-xs font-semibold text-emerald-700">
+                  <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                     {t.performance.insights.improving}
                   </h3>
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     {improvingList.map((item, i) => (
                       <div key={i} className="py-2.5 text-xs space-y-1">
-                        <div className="font-semibold text-slate-900">{item.observation}</div>
-                        <div className="text-slate-500">{item.evidence}</div>
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          {item.observation}
+                        </div>
+                        <div className="text-slate-500 dark:text-slate-400">{item.evidence}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="text-xs font-semibold text-red-700">
+                  <h3 className="text-xs font-semibold text-red-700 dark:text-red-400">
                     {t.performance.insights.worsening}
                   </h3>
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     {worseningList.map((item, i) => (
                       <div key={i} className="py-2.5 text-xs space-y-1">
-                        <div className="font-semibold text-slate-900">{item.observation}</div>
-                        <div className="text-slate-500">{item.evidence}</div>
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          {item.observation}
+                        </div>
+                        <div className="text-slate-500 dark:text-slate-400">{item.evidence}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <h3 className="text-xs font-semibold text-[#0F294A]">
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <h3 className="text-xs font-semibold text-[#0F294A] dark:text-slate-100">
                     {t.performance.insights.patterns}
                   </h3>
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     {delayPatternsList.map((item, i) => (
                       <div key={i} className="py-2.5 text-xs space-y-1">
-                        <div className="font-semibold text-slate-900">{item.pattern}</div>
-                        <div className="text-slate-500">{item.evidence}</div>
-                        <div className="text-amber-800">{item.impact}</div>
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          {item.pattern}
+                        </div>
+                        <div className="text-slate-500 dark:text-slate-400">{item.evidence}</div>
+                        <div className="text-amber-800 dark:text-amber-300">{item.impact}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                  <h3 className="text-xs font-semibold text-blue-800">
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <h3 className="text-xs font-semibold text-blue-800 dark:text-blue-400">
                     {t.performance.insights.actions}
                   </h3>
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     {actionsList.map((item, i) => (
                       <div key={i} className="py-2.5 text-xs space-y-1">
-                        <div className="font-semibold text-slate-900">{item.action}</div>
-                        <div className="text-slate-500">{item.evidence}</div>
-                        <div className="text-blue-700 font-medium">{item.expectedImpact}</div>
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          {item.action}
+                        </div>
+                        <div className="text-slate-500 dark:text-slate-400">{item.evidence}</div>
+                        <div className="text-blue-700 dark:text-blue-300 font-medium">
+                          {item.expectedImpact}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -310,12 +343,14 @@ export function PerformanceView({
               </div>
             ) : (
               <div className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <p className="text-xs text-slate-600 max-w-2xl">{t.performance.insights.promptCta}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-300 max-w-2xl">
+                  {t.performance.insights.promptCta}
+                </p>
                 <button
                   type="button"
                   onClick={onGenerateInsights}
                   disabled={isAnalyzing}
-                  className="px-4 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-60 border border-blue-200 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 disabled:opacity-60 border border-blue-200 dark:border-blue-800/70 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {t.performance.generateInsights}
                 </button>
@@ -326,4 +361,4 @@ export function PerformanceView({
       </section>
     </div>
   );
-}
+});

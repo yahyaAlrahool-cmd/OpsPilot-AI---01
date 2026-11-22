@@ -48,7 +48,7 @@ const ALL_STATUSES: ProjectStatus[] = [
 
 const ALL_PRIORITIES: PriorityLevel[] = ["low", "medium", "high", "critical"];
 
-export function ProjectsView({
+export const ProjectsView = React.memo(function ProjectsView({
   language,
   projects,
   employees,
@@ -113,12 +113,17 @@ export function ProjectsView({
   const hasFilters =
     search !== "" || statusFilter !== "all" || priorityFilter !== "all" || employeeFilter !== "all";
 
+  const selectClass =
+    "px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0B1120] text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#0F294A]">{t.projects.title}</h1>
-          <p className="text-sm text-slate-500 mt-1">{t.projects.subtitle}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F294A] dark:text-slate-100">
+            {t.projects.title}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.projects.subtitle}</p>
         </div>
         <button
           type="button"
@@ -131,7 +136,7 @@ export function ProjectsView({
       </div>
 
       {/* Filters Toolbar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 start-3 pointer-events-none" />
           <input
@@ -139,14 +144,15 @@ export function ProjectsView({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.projects.searchPlaceholder}
-            className="w-full ps-9 pe-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full ps-9 pe-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0B1120] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          aria-label={t.projects.allStatuses}
+          className={selectClass}
         >
           <option value="all">{t.projects.allStatuses}</option>
           {ALL_STATUSES.map((s) => (
@@ -159,7 +165,8 @@ export function ProjectsView({
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          aria-label={t.projects.allPriorities}
+          className={selectClass}
         >
           <option value="all">{t.projects.allPriorities}</option>
           {ALL_PRIORITIES.map((p) => (
@@ -172,7 +179,8 @@ export function ProjectsView({
         <select
           value={employeeFilter}
           onChange={(e) => setEmployeeFilter(e.target.value)}
-          className="px-3 py-2 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+          aria-label={t.projects.allEmployees}
+          className={selectClass}
         >
           <option value="all">{t.projects.allEmployees}</option>
           {employees.map((e) => (
@@ -191,7 +199,7 @@ export function ProjectsView({
               setPriorityFilter("all");
               setEmployeeFilter("all");
             }}
-            className="px-3 py-2 text-xs font-medium text-blue-700 hover:text-blue-800 whitespace-nowrap cursor-pointer"
+            className="px-3 py-2 text-xs font-medium text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 whitespace-nowrap cursor-pointer"
           >
             {t.projects.clearFilters}
           </button>
@@ -199,11 +207,13 @@ export function ProjectsView({
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center space-y-3">
-            <div className="text-sm font-semibold text-slate-900">{t.projects.emptyTitle}</div>
-            <p className="text-xs text-slate-500">{t.projects.emptyDesc}</p>
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t.projects.emptyTitle}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t.projects.emptyDesc}</p>
             <button
               type="button"
               onClick={onAddNew}
@@ -217,12 +227,12 @@ export function ProjectsView({
           <div className="overflow-x-auto">
             <table className="w-full text-start border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-semibold text-slate-500">
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-[#162033] text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                   <th className="py-3 px-4 text-start whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => handleSort("id")}
-                      className="inline-flex items-center gap-1 hover:text-slate-800 cursor-pointer"
+                      className="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <span>{t.projects.columns.id}</span>
                       <ArrowUpDown className="w-3 h-3" />
@@ -239,7 +249,7 @@ export function ProjectsView({
                     <button
                       type="button"
                       onClick={() => handleSort("deadline")}
-                      className="inline-flex items-center gap-1 hover:text-slate-800 cursor-pointer"
+                      className="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <span>{t.projects.columns.dates}</span>
                       <ArrowUpDown className="w-3 h-3" />
@@ -252,7 +262,7 @@ export function ProjectsView({
                     <button
                       type="button"
                       onClick={() => handleSort("progress")}
-                      className="inline-flex items-center gap-1 hover:text-slate-800 cursor-pointer"
+                      className="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <span>{t.projects.columns.progress}</span>
                       <ArrowUpDown className="w-3 h-3" />
@@ -262,7 +272,7 @@ export function ProjectsView({
                     <button
                       type="button"
                       onClick={() => handleSort("priority")}
-                      className="inline-flex items-center gap-1 hover:text-slate-800 cursor-pointer"
+                      className="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <span>{t.projects.columns.priority}</span>
                       <ArrowUpDown className="w-3 h-3" />
@@ -272,7 +282,7 @@ export function ProjectsView({
                     <button
                       type="button"
                       onClick={() => handleSort("estimatedWorkload")}
-                      className="inline-flex items-center gap-1 hover:text-slate-800 cursor-pointer"
+                      className="inline-flex items-center gap-1 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <span>{t.projects.columns.workload}</span>
                       <ArrowUpDown className="w-3 h-3" />
@@ -283,40 +293,59 @@ export function ProjectsView({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                 {filtered.map((project) => {
                   const owner = empMap.get(project.assignedEmployeeId);
                   const title = language === "ar" ? project.titleAr : project.title;
                   const client = language === "ar" ? project.clientNameAr : project.clientName;
                   const ownerName = owner ? (language === "ar" ? owner.nameAr : owner.name) : "—";
-                  const isOverdue =
-                    project.status !== "completed" && diffDays(todayISO, project.deadline) < 0;
+                  const daysDelta = diffDays(todayISO, project.deadline);
+                  const isOverdue = project.status !== "completed" && daysDelta < 0;
 
                   return (
-                    <tr key={project.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4 font-mono-num font-semibold text-blue-700 whitespace-nowrap">
+                    <tr
+                      key={project.id}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-mono-num font-semibold text-blue-700 dark:text-blue-400 whitespace-nowrap">
                         {project.id}
                       </td>
                       <td className="py-3 px-4 min-w-[200px] max-w-[260px]">
                         <button
                           type="button"
                           onClick={() => onInspect(project)}
-                          className="font-semibold text-slate-900 hover:text-blue-700 text-start block truncate w-full cursor-pointer"
+                          className="font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-700 dark:hover:text-blue-400 text-start block truncate w-full cursor-pointer"
                         >
                           {title}
                         </button>
-                        <div className="text-[11px] text-slate-500 truncate mt-0.5">{client}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          {client}
+                        </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
+                      <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         {t.services[project.serviceType]}
                       </td>
-                      <td className="py-3 px-4 text-slate-800 whitespace-nowrap">{ownerName}</td>
+                      <td className="py-3 px-4 text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        {ownerName}
+                      </td>
                       <td className="py-3 px-4 whitespace-nowrap font-mono-num">
-                        <div className={isOverdue ? "text-red-700 font-semibold" : "text-slate-800"}>
+                        <div
+                          className={
+                            isOverdue
+                              ? "text-red-700 dark:text-red-400 font-semibold"
+                              : "text-slate-800 dark:text-slate-200"
+                          }
+                        >
                           {project.deadline}
                         </div>
-                        <div className="text-[10px] text-slate-400">
-                          {t.projects.started}: {project.startDate}
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                          {project.status === "completed"
+                            ? `${t.projects.started}: ${project.startDate}`
+                            : isOverdue
+                            ? `${Math.abs(daysDelta)}${t.dashboard.alerts.daysOverdue}`
+                            : daysDelta === 0
+                            ? t.dashboard.alerts.dueToday
+                            : `${daysDelta}${t.dashboard.alerts.daysLeft}`}
                         </div>
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
@@ -332,7 +361,7 @@ export function ProjectsView({
                                 nextStatus === "completed" ? getTodayISO() : undefined,
                             });
                           }}
-                          className="text-xs border border-slate-200 rounded-md px-2 py-1 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                          className="text-xs border border-slate-200 dark:border-slate-700 rounded-md px-2 py-1 bg-white dark:bg-[#0B1120] text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
                         >
                           {ALL_STATUSES.map((s) => (
                             <option key={s} value={s}>
@@ -363,7 +392,7 @@ export function ProjectsView({
                             }}
                             className="w-20 accent-blue-600 cursor-pointer"
                           />
-                          <span className="font-mono-num font-semibold text-slate-800 w-9 text-end">
+                          <span className="font-mono-num font-semibold text-slate-800 dark:text-slate-200 w-9 text-end">
                             {project.progress}%
                           </span>
                         </div>
@@ -374,7 +403,7 @@ export function ProjectsView({
                           label={t.priorities[project.priority]}
                         />
                       </td>
-                      <td className="py-3 px-4 text-end font-mono-num text-slate-700 whitespace-nowrap">
+                      <td className="py-3 px-4 text-end font-mono-num text-slate-700 dark:text-slate-300 whitespace-nowrap">
                         {project.estimatedWorkload}
                         {t.projects.hoursSuffix}
                       </td>
@@ -384,7 +413,8 @@ export function ProjectsView({
                             type="button"
                             onClick={() => onInspect(project)}
                             title={t.projects.detailsTitle}
-                            className="p-1.5 text-slate-500 hover:text-blue-700 rounded hover:bg-slate-100 cursor-pointer"
+                            aria-label={t.projects.detailsTitle}
+                            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
@@ -392,7 +422,8 @@ export function ProjectsView({
                             type="button"
                             onClick={() => onEdit(project)}
                             title={t.projects.editTitle}
-                            className="p-1.5 text-slate-500 hover:text-blue-700 rounded hover:bg-slate-100 cursor-pointer"
+                            aria-label={t.projects.editTitle}
+                            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -400,7 +431,8 @@ export function ProjectsView({
                             type="button"
                             onClick={() => onRequestDelete(project)}
                             title={t.projects.deleteTitle}
-                            className="p-1.5 text-slate-500 hover:text-red-600 rounded hover:bg-red-50 cursor-pointer"
+                            aria-label={t.projects.deleteTitle}
+                            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-950/50 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -416,4 +448,4 @@ export function ProjectsView({
       </div>
     </div>
   );
-}
+});
